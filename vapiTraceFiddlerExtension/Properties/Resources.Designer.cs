@@ -63,20 +63,20 @@ namespace vapiTraceFiddlerExtension.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        internal static System.Drawing.Icon ICO_logoCO_16x16 {
+        internal static System.Drawing.Icon coolorange {
             get {
-                object obj = ResourceManager.GetObject("ICO_logoCO_16x16", resourceCulture);
+                object obj = ResourceManager.GetObject("coolorange", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Icon ICO_logoCO_48x48 {
+        internal static System.Drawing.Bitmap logo {
             get {
-                object obj = ResourceManager.GetObject("ICO_logoCO_48x48", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
+                object obj = ResourceManager.GetObject("logo", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

@@ -35,13 +35,14 @@
     <Reference Include="Fiddler">
       <HintPath>C:\Users\christian\AppData\Local\Programs\Fiddler\Fiddler.exe</HintPath>
     </Reference>
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InspectorUC.cs">
+    <Compile Include="VapiUserControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -50,31 +51,31 @@
     </Compile>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTimeSharedInput>true</DesignTimeSharedInput>
       <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="vapiTraceRequest.cs">
+    <Compile Include="VapiTraceRequest.cs">
       <AutoGen>false</AutoGen>
       <DesignTimeSharedInput>false</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="vapiTrace.cs">
+    <Compile Include="VapiTraceResponse.cs">
       <AutoGen>false</AutoGen>
       <DesignTimeSharedInput>false</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="InspectorUC.resx">
-      <DependentUpon>InspectorUC.cs</DependentUpon>
+    <EmbeddedResource Include="VapiUserControl.resx">
+      <DependentUpon>VapiUserControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\ICO-logoCO_16x16.ico" />
+    <None Include="Resources\coolorange.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\ICO-logoCO_48x48.ico" />
+    <None Include="Resources\logo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

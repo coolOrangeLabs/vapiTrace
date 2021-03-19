@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using Fiddler;
 using System.Text;
 using System.Windows.Forms;
@@ -7,38 +8,41 @@ using vapiTraceFiddlerExtension.Properties;
 
 namespace vapiTraceFiddlerExtension
 {
-	public class vapiTraceRequest : Inspector2, IRequestInspector2, IBaseInspector2
+	public class VapiTraceRequest : Inspector2, IRequestInspector2, IBaseInspector2
 	{
-		private InspectorUC _ucRequest;
+		private VapiUserControl _requestUserControl;
 
-		public bool bDirty
-		{
-			get
-			{
-				return false;
-			}
-		}
+		private string _vaultVersion;
+		private string _service;
+        private string _host;
+        private string _vaultName;
 
-		public byte[] body
+		public bool bDirty => false;
+
+        public byte[] body
 		{
-			get
-			{
-				return null;
-			}
-			set
-			{
-				string str = Encoding.UTF8.GetString(value);
+			get => null;
+            set
+            {
+                var error = "No valid Autodesk Vault SOAP request";
+                if (value == null)
+                {
+                    _requestUserControl.Clear(error);
+                    return;
+                }
+
+				var str = Encoding.UTF8.GetString(value);
 				if (str.IndexOf("<s:Envelope", StringComparison.Ordinal) <= 0)
 				{
-					_ucRequest.Clear();
+					_requestUserControl.Clear(error);
 				}
 				else
 				{
 					str = str.Substring(str.IndexOf("<s:Envelope", StringComparison.Ordinal));
 					str = string.Concat(str.Substring(0, str.IndexOf("</s:Envelope>", StringComparison.Ordinal)), "</s:Envelope>");
-					XmlDocument xmlDocument = new XmlDocument();
+					var xmlDocument = new XmlDocument();
 					xmlDocument.LoadXml(str);
-					_ucRequest.SetData("Request to Vault server", xmlDocument);
+					_requestUserControl.SetData("REQUEST TO VAULT", xmlDocument, _service, $"Vault {_vaultVersion} - Server: {_host} - Database: {_vaultName}");
 				}
 			}
 		}
@@ -51,23 +55,42 @@ namespace vapiTraceFiddlerExtension
 
 		public HTTPRequestHeaders headers
 		{
-			get;
-			set;
+            get => null;
+            set
+            {
+                var headers = value;
+                if (headers.Exists("SOAPAction"))
+                {
+					var action = headers["SOAPAction"];
+					_host = headers["Host"];
+					if (action.Contains("AutodeskDM/Services") || action.Contains("AutodeskDM/Filestore"))
+                    {
+						var parts = action.Trim('\\', '"').Split('/');
+                        _vaultVersion = parts[parts.Length - 3];
+                        _service = parts[parts.Length - 2];
+						_vaultName = System.Web.HttpUtility.ParseQueryString(headers.RequestPath).Get("vaultName");
+					}
+					else
+                        _service = null;
+				}
+			}
 		}
 
-		public vapiTraceRequest()
+		public VapiTraceRequest()
 		{
 		}
 
 		public override void AddToTab(TabPage o)
 		{
-			_ucRequest = new InspectorUC()
+			_requestUserControl = new VapiUserControl()
 			{
 				Dock = DockStyle.Fill
 			};
-			o.Controls.Add(_ucRequest);
-			o.Text = "vapiTrace";
-			FiddlerApplication.UI.imglSessionIcons.Images.Add(Resources.ICO_logoCO_16x16.ToBitmap());
+			o.Controls.Add(_requestUserControl);
+			o.Text = @"vapiTrace";
+
+            var icon = new Icon(Resources.coolorange, 16, 16).ToBitmap();
+			FiddlerApplication.UI.imglSessionIcons.Images.Add(icon);
 			o.ImageIndex = FiddlerApplication.UI.imglSessionIcons.Images.Count - 1;
 			FiddlerApplication.UI.tabsViews.TabPages.Add(o);
 		}
