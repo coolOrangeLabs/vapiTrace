@@ -15,10 +15,13 @@ THE USAGE OF THIS SAMPLE IS AT YOUR OWN RISK AND **THERE IS NO SUPPORT** RELATED
 
 Learn the Vault API, by spying how the Vault client does his thing. Extend the Fiddler with the vapiTrace extension and see which Vault API command is called and how, in a simple and readable way.
 
+![vapiTrace](https://user-images.githubusercontent.com/5640189/112031071-36950800-8b3b-11eb-8559-685692eed67d.png)
+
+
 ## Installation
-In order to install the vapiTrace extension for Fiddler, just download the DLL below and save it into the Fiddler Inspector folder under "%localappdata%\Programs\Fiddler\Inspectors".
+In order to install the vapiTrace extension for Fiddler, just download the ZIP from the 'Releases' tab and extract it into the Fiddler Inspector folder under "%localappdata%\Programs\Fiddler\Inspectors".
 
 ## Author
-coolOrange s.r.l.
+COOLORANGE s.r.l.
 
 ![coolOrange](https://i.ibb.co/NmnmjDT/Logo-CO-Full-colore-RGB-short-Payoff.png)
