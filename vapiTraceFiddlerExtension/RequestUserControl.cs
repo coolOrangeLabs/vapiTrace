@@ -30,20 +30,26 @@ namespace vapiTraceFiddlerExtension
                 if (bodyNode != null)
                 {
                     var firstNode = _requestTree.Nodes.Add(service);
-                    AddElements(firstNode, bodyNode.FirstChild, out var method);
+                    var methodNode = bodyNode.FirstChild;
+                    var method = methodNode.Name;
+                    AddElements(firstNode, methodNode);
                     _requestTree.ExpandAll();
-                    _requestTree.SelectedNode = _requestTree.Nodes[0];
 
                     var info = VaultAssembly.GetServiceType(service);
                     var methodInfo = info.GetMethod(method);
-                    var parameterInfos = methodInfo.GetParameters();
-                    var parameters = parameterInfos.Select(p => p.Name).ToList();
-                    // TODO: get parameter types and display it in the UI
-                    // https://stackoverflow.com/questions/15602606/programmatically-get-summary-comments-at-runtime
-                    txtCommand.Text = GenerateCommand(service, method, parameters);
+                    if (methodInfo != null)
+                    {
+                        var parameterInfos = methodInfo.GetParameters();
+                        var parameters = parameterInfos.Select(p => p.Name).ToList();
+                        // TODO: get parameter types and display it in the UI
+                        // https://stackoverflow.com/questions/15602606/programmatically-get-summary-comments-at-runtime
+                        txtCommand.Text = GenerateCommand(service, method, parameters);
+                    }
                 }
             }
             _requestTree.EndUpdate();
+            if (_requestTree.Nodes.Count > 0)
+                _requestTree.SelectedNode = _requestTree.Nodes[0];
         }
 
         private string GenerateCommand(string service, string method, IEnumerable<string> parameters)
@@ -56,38 +62,28 @@ namespace vapiTraceFiddlerExtension
             return "$vault." + service + "." + method + "(" + arguments + ")";
         }
 
-        private void AddElements(TreeNode tNode, XmlNode xNode, out string method)
+        private void AddElements(TreeNode tNode, XmlNode xNode)
         {
-            method = "";
             if (xNode.NodeType == XmlNodeType.Element)
             {
                 var name = xNode.Name;
-                method = name;
                 if (xNode.InnerText.Length > 0 && xNode.HasChildNodes && xNode.FirstChild.NodeType == XmlNodeType.Text)
                     name = string.Concat(name, " = ", xNode.InnerText);
 
-                TreeNode nextNode;
-                if ((name.EndsWith("Response") || name.EndsWith("Result")))
+                var nextNode = tNode.Nodes.Add(name);
+                if (xNode.Attributes != null)
                 {
-                    nextNode = tNode;
-                }
-                else
-                {
-                    nextNode = tNode.Nodes.Add(name);
-                    if (xNode.Attributes != null)
+                    foreach (XmlAttribute attribute in xNode.Attributes)
                     {
-                        foreach (XmlAttribute attribute in xNode.Attributes)
-                        {
-                            if (attribute.Name.Equals("xmlns"))
-                                continue;
+                        if (attribute.Name.Equals("xmlns"))
+                            continue;
 
-                            nextNode.Nodes.Add($"{attribute.Name} = {attribute.InnerText}");
-                        }
+                        nextNode.Nodes.Add($"{attribute.Name} = {attribute.InnerText}");
                     }
                 }
 
                 foreach (XmlNode childNode in xNode.ChildNodes)
-                    AddElements(nextNode, childNode, out _);
+                    AddElements(nextNode, childNode);
             }
         }
 
