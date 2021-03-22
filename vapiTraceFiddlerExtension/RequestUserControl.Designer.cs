@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Windows.Forms;
-using System.Xml;
 
 namespace vapiTraceFiddlerExtension
 {
-    public class VapiUserControl : UserControl
+    public partial class RequestUserControl : UserControl
     {
         private readonly IContainer components = null;
         private TreeView _requestTree;
@@ -17,13 +14,9 @@ namespace vapiTraceFiddlerExtension
         private Panel panelSeperator;
         private PictureBox pictureLogo;
 
-        public VapiUserControl()
-        {
-            InitializeComponent();
-        }
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VapiUserControl));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RequestUserControl));
             this._requestTree = new System.Windows.Forms.TreeView();
             this.txtCommand = new System.Windows.Forms.TextBox();
             this.panelHeader = new System.Windows.Forms.Panel();
@@ -70,11 +63,11 @@ namespace vapiTraceFiddlerExtension
             // lblHeader
             // 
             this.lblHeader.AutoSize = true;
-            this.lblHeader.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblHeader.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblHeader.ForeColor = System.Drawing.SystemColors.WindowText;
-            this.lblHeader.Location = new System.Drawing.Point(11, 13);
+            this.lblHeader.Location = new System.Drawing.Point(8, 13);
             this.lblHeader.Name = "lblHeader";
-            this.lblHeader.Size = new System.Drawing.Size(231, 17);
+            this.lblHeader.Size = new System.Drawing.Size(208, 15);
             this.lblHeader.TabIndex = 2;
             this.lblHeader.Text = "No valid Autodesk Vault SOAP request";
             // 
@@ -101,7 +94,7 @@ namespace vapiTraceFiddlerExtension
             this.panelSeperator.Size = new System.Drawing.Size(600, 4);
             this.panelSeperator.TabIndex = 4;
             // 
-            // VapiUserControl
+            // RequestUserControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -109,7 +102,7 @@ namespace vapiTraceFiddlerExtension
             this.Controls.Add(this.panelSeperator);
             this.Controls.Add(this.txtCommand);
             this.Controls.Add(this.panelHeader);
-            this.Name = "VapiUserControl";
+            this.Name = "RequestUserControl";
             this.Size = new System.Drawing.Size(600, 400);
             this.panelHeader.ResumeLayout(false);
             this.panelHeader.PerformLayout();
@@ -125,110 +118,6 @@ namespace vapiTraceFiddlerExtension
                 components?.Dispose();
 
             base.Dispose(disposing);
-        }
-
-        public void Clear(string header = null)
-        {
-            _requestTree.Nodes.Clear();
-            UpdateUserControl(header, string.Empty);
-        }
-
-        public void SetData(string rootText, XmlDocument xml, string service = null, string header = null)
-        {
-            _requestTree.Nodes.Clear();
-
-            var xmlNamespaceManagers = new XmlNamespaceManager(xml.NameTable);
-            xmlNamespaceManagers.AddNamespace(xml.FirstChild.Prefix, xml.FirstChild.NamespaceURI);
-            var xmlNodes = xml.DocumentElement?.SelectSingleNode("//s:Body", xmlNamespaceManagers);
-            if (xmlNodes != null)
-            {
-                var treeNode = _requestTree.Nodes.Add(rootText);
-                TreeNode rootNode;
-                if (service != null)
-                    rootNode = treeNode.Nodes.Add(service);
-                else
-                    rootNode = treeNode;
-
-                AddElements(rootNode, xmlNodes.FirstChild, (service == null), out var method, out var parameters);
-                treeNode.ExpandAll();
-                _requestTree.SelectedNode = treeNode;
-
-                if (service != null)
-                    UpdateUserControl(header, GenerateCommand(service, method, parameters));
-                else
-                    UpdateUserControl(string.Empty, string.Empty);
-            }
-        }
-
-        private void UpdateUserControl(string header, string command)
-        {
-            var visible = !string.IsNullOrEmpty(header);
-            
-            lblHeader.Text = header;
-            txtCommand.Text = command;
-            txtCommand.Visible = visible;
-            panelHeader.Visible = visible;
-            panelSeperator.Visible = visible;
-        }
-
-        private string GenerateCommand(string service, string method, string[] parameters)
-        {
-            var arguments = "";
-            foreach (var parameter in parameters)
-                arguments += "$" + parameter + ", ";
-            arguments = arguments.TrimEnd(',', ' ');
-
-            return "$vault." + service + "." + method + "(" + arguments + ")";
-        }
-
-        private void AddElements(TreeNode tNode, XmlNode xNode, bool ignoreResponseFrame, out string method, out string[] parameters)
-        {
-            var arguments = new List<string>();
-            method = "";
-            if (xNode.NodeType == XmlNodeType.Element)
-            {
-                var name = xNode.Name;
-                method = name;
-                if (xNode.InnerText.Length > 0 && xNode.HasChildNodes && xNode.FirstChild.NodeType == XmlNodeType.Text)
-                {
-                    if (ignoreResponseFrame && name.EndsWith("Result"))
-                        name = xNode.InnerText;
-                    else
-                        name = string.Concat(name, " = ", xNode.InnerText);
-                }
-
-                TreeNode nextNode;
-                if (ignoreResponseFrame && (name.EndsWith("Response") || name.EndsWith("Result")))
-                {
-                    nextNode = tNode;
-                }
-                else
-                {
-                    nextNode = tNode.Nodes.Add(name);
-                    if (xNode.Attributes != null)
-                    {
-                        foreach (XmlAttribute attribute in xNode.Attributes)
-                        {
-                            if (attribute.Name.Equals("xmlns"))
-                                continue;
-
-                            nextNode.Nodes.Add($"{attribute.Name} = {attribute.InnerText}");
-                        }
-                    }                   
-                }
-
-                foreach (XmlNode childNode in xNode.ChildNodes)
-                {
-                    AddElements(nextNode, childNode, ignoreResponseFrame, out _, out _);
-                    arguments.Add(childNode.Name);
-                }
-            }
-            parameters = arguments.ToArray();
-        }
-
-        private void LogoClick(object sender, EventArgs e)
-        {
-            Process.Start("https://www.coolorange.com");
         }
     }
 }

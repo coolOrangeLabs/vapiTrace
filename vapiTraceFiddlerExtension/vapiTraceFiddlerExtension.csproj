@@ -35,14 +35,27 @@
     <Reference Include="Fiddler">
       <HintPath>C:\Users\christian\AppData\Local\Programs\Fiddler\Fiddler.exe</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="VapiUserControl.cs">
+    <Compile Include="SoapTextReader.cs" />
+    <Compile Include="SerializedTreeNode.cs" />
+    <Compile Include="RequestUserControl.Designer.cs">
+      <DependentUpon>RequestUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ResponseUserControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="RequestUserControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -54,16 +67,24 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="VapiTraceRequest.cs">
+    <Compile Include="RequestInspector.cs">
       <AutoGen>false</AutoGen>
       <DesignTimeSharedInput>false</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="VapiTraceResponse.cs">
+    <Compile Include="ResponseInspector.cs">
       <AutoGen>false</AutoGen>
       <DesignTimeSharedInput>false</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="VapiUserControl.resx">
-      <DependentUpon>VapiUserControl.cs</DependentUpon>
+    <Compile Include="ResponseUserControl.Designer.cs">
+      <DependentUpon>ResponseUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="VaultAssembly.cs" />
+    <EmbeddedResource Include="ResponseUserControl.resx">
+      <DependentUpon>ResponseUserControl.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RequestUserControl.resx">
+      <DependentUpon>RequestUserControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -72,6 +93,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="Resources\coolorange.ico" />
   </ItemGroup>
   <ItemGroup>
