@@ -13,10 +13,12 @@ using vapiTraceFiddlerExtension.Properties;
 
 namespace vapiTraceFiddlerExtension
 {
-	public class ResponseInspector : Inspector2, IResponseInspector2, IBaseInspector2
+    // ReSharper disable once UnusedMember.Global
+    // ReSharper disable once RedundantExtendsListEntry
+    public class ResponseInspector : Inspector2, IResponseInspector2, IBaseInspector2
 	{
 		private ResponseUserControl _responseUserControl;
-        private const string SoapError = "No valid Autodesk Vault SOAP response";
+        
 
         public bool bDirty => false;
 
@@ -27,14 +29,14 @@ namespace vapiTraceFiddlerExtension
             {
                 if (value == null)
                 {
-                    _responseUserControl.SetData(SoapError);
+                    _responseUserControl.Clear();
                     return;
                 }
 
                 var s = Encoding.UTF8.GetString(value);
                 if (s.IndexOf("<s:Envelope", StringComparison.Ordinal) <= 0)
                 {
-                    _responseUserControl.SetData(SoapError);
+                    _responseUserControl.Clear();
                     return;
                 }
 
@@ -52,7 +54,7 @@ namespace vapiTraceFiddlerExtension
                 var bodyNode = xml.DocumentElement?.SelectSingleNode("//s:Body", xmlNamespaceManagers);
                 if (bodyNode == null)
                 {
-                    _responseUserControl.SetData(SoapError);
+                    _responseUserControl.Clear();
                     return;
                 }
 
@@ -66,7 +68,7 @@ namespace vapiTraceFiddlerExtension
                     start = "AutodeskDM/Filestore/";
                 else
                 {
-                    _responseUserControl.SetData(SoapError);
+                    _responseUserControl.Clear();
                     return;
                 }
 
@@ -78,10 +80,20 @@ namespace vapiTraceFiddlerExtension
                     service = part.Substring(0, part.IndexOf('/'));
                 var serviceType = VaultAssembly.GetServiceType(service);
 
+                var method = responseNode.Name.Remove(responseNode.Name.LastIndexOf("Response", StringComparison.Ordinal));
+                var methodInfo = serviceType.GetMethod(method);
+                if (methodInfo == null || methodInfo.ReturnParameter == null)
+                {
+                    _responseUserControl.Clear();
+                    return;
+                }
+
+                var returnType = methodInfo.ReturnParameter.ParameterType;
+
                 var resultNode = responseNode.FirstChild;
                 if (resultNode == null)
                 {
-                    _responseUserControl.SetData("Response from Vault: Empty");
+                    _responseUserControl.SetData(returnType.FullName);
                     return;
                 }
 
@@ -105,47 +117,37 @@ namespace vapiTraceFiddlerExtension
                     }
                 }
 
-                var method = resultNode.Name.Remove(resultNode.Name.LastIndexOf("Result", StringComparison.Ordinal));
-                var methodInfo = serviceType.GetMethod(method);
-                if (methodInfo == null || methodInfo.ReturnParameter == null)
-                {
-                    _responseUserControl.SetData(SoapError);
-                    return;
-                }
-
-                var parameterType = methodInfo.ReturnParameter.ParameterType;
-
                 try
                 {
                     using (TextReader reader = new StringReader(resultNode.OuterXml))
                     {
-                        var serializer = new XmlSerializer(parameterType, new XmlRootAttribute(resultNode.Name));
-                        if (parameterType.IsArray)
+                        var serializer = new XmlSerializer(returnType, new XmlRootAttribute(resultNode.Name));
+                        if (returnType.IsArray)
                         {
                             var trees = new List<SerializedTreeNode>();
                             var result = serializer.Deserialize(new SoapTextReader(reader));
-                            if (result is IEnumerable)
+                            if (result is IEnumerable enumerable)
                             {
-                                foreach (var r in (IEnumerable)result)
+                                foreach (var r in enumerable)
                                 {
                                     var treeNode = SerializedTreeNode.CreateTree(r, r.GetType().Name);
                                     trees.Add(treeNode);
                                 }
                             }
-                            _responseUserControl.SetData("Response from Vault: " + parameterType.Name, trees);
+                            _responseUserControl.SetData(returnType.FullName, trees, returnType);
                         }
                         else
                         {
                             object result = serializer.Deserialize(new SoapTextReader(reader));
-                            var treeNode = SerializedTreeNode.CreateTree(result, parameterType.Name);
-                            _responseUserControl.SetData("Response from Vault: " + parameterType.Name, treeNode);
+                            var treeNode = SerializedTreeNode.CreateTree(result, returnType.Name);
+                            _responseUserControl.SetData(returnType.FullName, treeNode, returnType);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
                     Debug.Write(ex.Message);
-                    _responseUserControl.SetData(ex.Message);
+                    _responseUserControl.Clear(ex.Message);
                 }
             }
         }
@@ -164,6 +166,11 @@ namespace vapiTraceFiddlerExtension
 
 		public ResponseInspector()
         {
+            if (!VaultAssembly.IsVaultDllPresent)
+            {
+                throw new DllNotFoundException(
+                    "Autodesk.Connectivity.WebServices.dll cannot be found. Please install Vault");
+            }
         }
 
 		public override void AddToTab(TabPage o)

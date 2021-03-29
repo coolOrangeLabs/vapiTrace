@@ -9,22 +9,13 @@ namespace vapiTraceFiddlerExtension
         private readonly IContainer components = null;
         private TreeView _requestTree;
         private TextBox txtCommand;
-        private Panel panelHeader;
-        private Label lblHeader;
-        private Panel panelSeperator;
-        private PictureBox pictureLogo;
 
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RequestUserControl));
             this._requestTree = new System.Windows.Forms.TreeView();
             this.txtCommand = new System.Windows.Forms.TextBox();
-            this.panelHeader = new System.Windows.Forms.Panel();
-            this.lblHeader = new System.Windows.Forms.Label();
-            this.pictureLogo = new System.Windows.Forms.PictureBox();
+            this.webBrowser = new System.Windows.Forms.WebBrowser();
             this.panelSeperator = new System.Windows.Forms.Panel();
-            this.panelHeader.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureLogo)).BeginInit();
             this.SuspendLayout();
             // 
             // _requestTree
@@ -33,80 +24,63 @@ namespace vapiTraceFiddlerExtension
             this._requestTree.Dock = System.Windows.Forms.DockStyle.Fill;
             this._requestTree.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this._requestTree.ForeColor = System.Drawing.SystemColors.ControlText;
-            this._requestTree.Location = new System.Drawing.Point(0, 46);
+            this._requestTree.Location = new System.Drawing.Point(0, 127);
+            this._requestTree.Margin = new System.Windows.Forms.Padding(4);
             this._requestTree.Name = "_requestTree";
-            this._requestTree.Size = new System.Drawing.Size(600, 332);
+            this._requestTree.Size = new System.Drawing.Size(800, 343);
             this._requestTree.TabIndex = 0;
             // 
             // txtCommand
             // 
             this.txtCommand.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.txtCommand.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCommand.Location = new System.Drawing.Point(0, 378);
+            this.txtCommand.Location = new System.Drawing.Point(0, 470);
+            this.txtCommand.Margin = new System.Windows.Forms.Padding(4);
             this.txtCommand.Name = "txtCommand";
             this.txtCommand.ReadOnly = true;
-            this.txtCommand.Size = new System.Drawing.Size(600, 22);
+            this.txtCommand.Size = new System.Drawing.Size(800, 22);
             this.txtCommand.TabIndex = 2;
             this.txtCommand.Text = "$vault.DocumentService.GetFileById($id)";
             // 
-            // panelHeader
+            // webBrowser
             // 
-            this.panelHeader.BackColor = System.Drawing.SystemColors.Window;
-            this.panelHeader.Controls.Add(this.lblHeader);
-            this.panelHeader.Controls.Add(this.pictureLogo);
-            this.panelHeader.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelHeader.Location = new System.Drawing.Point(0, 0);
-            this.panelHeader.Name = "panelHeader";
-            this.panelHeader.Size = new System.Drawing.Size(600, 42);
-            this.panelHeader.TabIndex = 3;
-            // 
-            // lblHeader
-            // 
-            this.lblHeader.AutoSize = true;
-            this.lblHeader.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblHeader.ForeColor = System.Drawing.SystemColors.WindowText;
-            this.lblHeader.Location = new System.Drawing.Point(8, 13);
-            this.lblHeader.Name = "lblHeader";
-            this.lblHeader.Size = new System.Drawing.Size(208, 15);
-            this.lblHeader.TabIndex = 2;
-            this.lblHeader.Text = "No valid Autodesk Vault SOAP request";
-            // 
-            // pictureLogo
-            // 
-            this.pictureLogo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pictureLogo.BackColor = System.Drawing.Color.White;
-            this.pictureLogo.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pictureLogo.Image = ((System.Drawing.Image)(resources.GetObject("pictureLogo.Image")));
-            this.pictureLogo.Location = new System.Drawing.Point(414, 5);
-            this.pictureLogo.Name = "pictureLogo";
-            this.pictureLogo.Size = new System.Drawing.Size(179, 32);
-            this.pictureLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureLogo.TabIndex = 1;
-            this.pictureLogo.TabStop = false;
-            this.pictureLogo.Click += new System.EventHandler(this.LogoClick);
+            this.webBrowser.AllowWebBrowserDrop = false;
+            this.webBrowser.Dock = System.Windows.Forms.DockStyle.Top;
+            this.webBrowser.IsWebBrowserContextMenuEnabled = false;
+            this.webBrowser.Location = new System.Drawing.Point(0, 0);
+            this.webBrowser.MinimumSize = new System.Drawing.Size(20, 20);
+            this.webBrowser.Name = "webBrowser";
+            this.webBrowser.ScriptErrorsSuppressed = true;
+            this.webBrowser.ScrollBarsEnabled = false;
+            this.webBrowser.Size = new System.Drawing.Size(800, 125);
+            this.webBrowser.TabIndex = 5;
+            this.webBrowser.WebBrowserShortcutsEnabled = false;
+            this.webBrowser.DocumentCompleted += new System.Windows.Forms.WebBrowserDocumentCompletedEventHandler(this.OnWebBrowserDocumentCompleted);
+            this.webBrowser.NewWindow += new System.ComponentModel.CancelEventHandler(this.OnWebBrowserNewWindow);
             // 
             // panelSeperator
             // 
             this.panelSeperator.BackColor = System.Drawing.SystemColors.Control;
             this.panelSeperator.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelSeperator.Location = new System.Drawing.Point(0, 42);
+            this.panelSeperator.Location = new System.Drawing.Point(0, 125);
+            this.panelSeperator.Margin = new System.Windows.Forms.Padding(4);
             this.panelSeperator.Name = "panelSeperator";
-            this.panelSeperator.Size = new System.Drawing.Size(600, 4);
-            this.panelSeperator.TabIndex = 4;
+            this.panelSeperator.Size = new System.Drawing.Size(800, 2);
+            this.panelSeperator.TabIndex = 6;
+            this.panelSeperator.Visible = false;
             // 
             // RequestUserControl
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this._requestTree);
             this.Controls.Add(this.panelSeperator);
+            this.Controls.Add(this.webBrowser);
             this.Controls.Add(this.txtCommand);
-            this.Controls.Add(this.panelHeader);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "RequestUserControl";
-            this.Size = new System.Drawing.Size(600, 400);
-            this.panelHeader.ResumeLayout(false);
-            this.panelHeader.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureLogo)).EndInit();
+            this.Size = new System.Drawing.Size(800, 492);
+            this.SizeChanged += new System.EventHandler(this.UserControl_SizeChanged);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -119,5 +93,8 @@ namespace vapiTraceFiddlerExtension
 
             base.Dispose(disposing);
         }
+
+        private WebBrowser webBrowser;
+        private Panel panelSeperator;
     }
 }

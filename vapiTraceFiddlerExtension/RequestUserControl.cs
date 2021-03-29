@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
 using System.Xml;
 
@@ -9,18 +10,40 @@ namespace vapiTraceFiddlerExtension
 {
     public partial class RequestUserControl
     {
+        private const string SoapError = "No valid Autodesk Vault SOAP request";
+
         public RequestUserControl()
         {
             InitializeComponent();
         }
 
-        public void SetData(string header, XmlDocument xml = null, string service = null)
+        public void Clear(string error = null)
         {
             _requestTree.BeginUpdate();
             _requestTree.Nodes.Clear();
-            lblHeader.Text = header;
+
+            if (string.IsNullOrEmpty(error))
+                error = SoapError;
 
             txtCommand.Text = string.Empty;
+            webBrowser.DocumentText = VaultAssembly.Html(error, string.Empty, string.Empty, string.Empty);
+
+            _requestTree.EndUpdate();
+            if (_requestTree.Nodes.Count > 0)
+                _requestTree.SelectedNode = _requestTree.Nodes[0];
+        }
+
+        public void SetData(XmlDocument xml = null, string service = null)
+        {
+            _requestTree.BeginUpdate();
+            _requestTree.Nodes.Clear(); 
+            
+            txtCommand.Text = string.Empty;
+            var h1 = "";
+
+            var documentation = "";
+            var command = "";
+            var parameterList = new List<string>();
 
             if (xml != null && service != null)
             {
@@ -39,27 +62,48 @@ namespace vapiTraceFiddlerExtension
                     var methodInfo = info.GetMethod(method);
                     if (methodInfo != null)
                     {
+                        h1 = methodInfo.Name;
+                        documentation = methodInfo.GetDocumentation();
+                        command = "Request";
+
                         var parameterInfos = methodInfo.GetParameters();
-                        var parameters = parameterInfos.Select(p => p.Name).ToList();
-                        // TODO: get parameter types and display it in the UI
-                        // https://stackoverflow.com/questions/15602606/programmatically-get-summary-comments-at-runtime
-                        txtCommand.Text = GenerateCommand(service, method, parameters);
+                        txtCommand.Text = GenerateCommand(service, method, parameterInfos);
+
+                        foreach (var parameterInfo in parameterInfos)
+                        {
+                            var parameterName = parameterInfo.Name;
+                            var parameterTypeName = parameterInfo.ParameterType.FullName;
+                            parameterList.Add($"[{parameterTypeName}] ${parameterName}");
+                        }
                     }
                 }
             }
+
+            if (parameterList.Count > 0)
+            {
+                var s = "<parameter>";
+                foreach (var p in parameterList)
+                    s += p + "<br/>";
+                s += "</parameter>";
+
+                documentation += s;
+            }
+
+            webBrowser.DocumentText = VaultAssembly.Html(h1 + " Method", service, documentation, command);
+
             _requestTree.EndUpdate();
             if (_requestTree.Nodes.Count > 0)
                 _requestTree.SelectedNode = _requestTree.Nodes[0];
         }
 
-        private string GenerateCommand(string service, string method, IEnumerable<string> parameters)
+        private string GenerateCommand(string service, string method, ParameterInfo[] parameterInfos)
         {
-            var arguments = "";
-            foreach (var parameter in parameters)
-                arguments += "$" + parameter + ", ";
-            arguments = arguments.TrimEnd(',', ' ');
+            var parameter = "";
+            foreach (var parameterInfo in parameterInfos)
+                parameter += "$" + parameterInfo.Name + ", ";
+            parameter = parameter.TrimEnd(',', ' ');
 
-            return "$vault." + service + "." + method + "(" + arguments + ")";
+            return "$vault." + service + "." + method + "(" + parameter + ")";
         }
 
         private void AddElements(TreeNode tNode, XmlNode xNode)
@@ -87,9 +131,58 @@ namespace vapiTraceFiddlerExtension
             }
         }
 
-        private void LogoClick(object sender, EventArgs e)
+        #region WebBrowser
+        private void UserControl_SizeChanged(object sender, EventArgs e)
         {
+            webBrowser.Refresh();
+        }
+
+        private void OnWebBrowserDocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
+        {
+            if (webBrowser.Document?.Body != null)
+            {
+                webBrowser.Document.Body.KeyDown -= OnWebBrowserKeyDown;
+                webBrowser.Document.Body.KeyDown += OnWebBrowserKeyDown;
+                var events = (mshtml.HTMLDocumentEvents2_Event) webBrowser.Document.DomDocument;
+                events.onmousewheel -= OnWebBrowserMouseWheel;
+                events.onmousewheel += OnWebBrowserMouseWheel;
+
+                var size = new Size(
+                    webBrowser.Document.Body.ScrollRectangle.Size.Width,
+                    webBrowser.Document.Body.ScrollRectangle.Size.Height);
+                size.Height += 6;
+
+                webBrowser.Size = size;
+            }
+        }
+
+        private void OnWebBrowserNewWindow(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            e.Cancel = true;
             Process.Start("https://www.coolorange.com");
         }
+
+        private void OnWebBrowserKeyDown(object sender, HtmlElementEventArgs e)
+        {
+            if ((e.KeyPressedCode == 109 && e.CtrlKeyPressed) ||
+                (e.KeyPressedCode == 107 && e.CtrlKeyPressed) ||
+                (e.CtrlKeyPressed && e.KeyPressedCode == 187) ||
+                (e.CtrlKeyPressed && e.KeyPressedCode == 189))
+            {
+                e.ReturnValue = false;
+            }
+        }
+
+        private bool OnWebBrowserMouseWheel(mshtml.IHTMLEventObj obj)
+        {
+            if (obj.ctrlKey)
+            {
+                obj.cancelBubble = true;
+                obj.returnValue = false;
+                return false;
+            }
+            return true;
+        }
+        #endregion
     }
 }

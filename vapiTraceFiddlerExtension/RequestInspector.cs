@@ -8,12 +8,13 @@ using vapiTraceFiddlerExtension.Properties;
 
 namespace vapiTraceFiddlerExtension
 {
+    // ReSharper disable once UnusedMember.Global
+    // ReSharper disable once RedundantExtendsListEntry
 	public class RequestInspector : Inspector2, IRequestInspector2, IBaseInspector2
 	{
 		private RequestUserControl _requestUserControl;
-        private const string SoapError = "No valid Autodesk Vault SOAP request";
 
-		private string _vaultVersion;
+        private string _vaultVersion;
 		private string _service;
         private string _host;
         private string _vaultName;
@@ -27,14 +28,14 @@ namespace vapiTraceFiddlerExtension
             {
                 if (value == null)
                 {
-                    _requestUserControl.SetData(SoapError);
+                    _requestUserControl.Clear();
                     return;
                 }
 
 				var s = Encoding.UTF8.GetString(value);
 				if (s.IndexOf("<s:Envelope", StringComparison.Ordinal) <= 0)
 				{
-					_requestUserControl.SetData(SoapError);
+					_requestUserControl.Clear();
 				}
 				else
 				{
@@ -42,7 +43,9 @@ namespace vapiTraceFiddlerExtension
 					s = string.Concat(s.Substring(0, s.IndexOf("</s:Envelope>", StringComparison.Ordinal)), "</s:Envelope>");
 					var xml = new XmlDocument();
 					xml.LoadXml(s);
-					_requestUserControl.SetData($"Request to Vault {_vaultVersion} - Server: {_host} - Database: {_vaultName}", xml, _service);
+
+                    //var t = $"Database: {_vaultName}, Server: {_host} (Vault {_vaultVersion})";
+					_requestUserControl.SetData(xml, _service);
 				}
 			}
 		}
@@ -76,8 +79,13 @@ namespace vapiTraceFiddlerExtension
 		}
 
 		public RequestInspector()
-		{
-		}
+        {
+            if (!VaultAssembly.IsVaultDllPresent)
+            {
+                throw new DllNotFoundException(
+					"Autodesk.Connectivity.WebServices.dll cannot be found. Please install Vault");
+            }
+        }
 
 		public override void AddToTab(TabPage o)
 		{
