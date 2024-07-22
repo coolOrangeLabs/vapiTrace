@@ -1,0 +1,19 @@
+﻿<Project Sdk="WixToolset.Sdk/5.0.0">
+    <ItemGroup>
+        <Content Include="Config.wxi"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="WixToolset.UI.wixext" Version="5.0.0"/>
+    </ItemGroup>
+    <PropertyGroup>
+        <Major>1</Major>
+        <Minor>0</Minor>
+        <Patch>0</Patch>
+        <Revision>0</Revision>
+        <OutputName>COOLORANGE.vapiTrace_$(Major).$(Minor).$(Patch).$(Revision)</OutputName>
+        <Manufacturer>coolOrange</Manufacturer>
+        <ProductName>vapiTrace</ProductName>
+        <Platforms>x64</Platforms>
+        <DefineConstants>Major=$(Major);Minor=$(Minor);Patch=$(Patch);Revision=$(Revision);$(DefineConstants)</DefineConstants>
+    </PropertyGroup>
+</Project>

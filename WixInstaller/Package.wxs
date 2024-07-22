@@ -1,0 +1,37 @@
+﻿<Wix xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui" xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <?include Config.wxi?>
+
+
+    <Package
+            Name="$(var.ProductName)"
+            Manufacturer="coolOrange"
+            Version="$(var.Major).$(var.Minor).$(var.Patch).$(var.Revision)"
+            UpgradeCode="75AF5961-75A9-4374-A0A4-7FB2B42F0305"
+            Scope="perUser">
+
+
+        <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)"/>
+
+        <Media Id="1" Cabinet="cab1.cab" EmbedCab="yes"/>
+
+        <Feature Id="Main">
+            <ComponentGroupRef Id="AllComponents"/>
+        </Feature>
+
+        <ui:WixUI Id="WixUI_Minimal"/>
+
+        <WixVariable Id="WixUILicenseRtf" Value="Resources\EULA.rtf"/>
+        <WixVariable Id="WixUIBannerBmp" Value="Resources\bg_banner.bmp"/>
+        <WixVariable Id="WixUIDialogBmp" Value="Resources\bg_dialog.bmp"/>
+
+        <Icon Id="coolOrange.ico" SourceFile="Resources\coolorange.ico"/>
+        <Property Id="ARPPRODUCTICON" Value="coolOrange.ico"/>
+        <Property Id="ARPCOMMENTS" Value="$(var.ProductName)"/>
+        <Property Id="ARPHELPLINK" Value="https://support.coolorange.com"/>
+        <Property Id="ARPCONTACT" Value="support@coolorange.com"/>
+
+        <UI>
+            <TextStyle Id="Custom_Style" Size="10" Red="0" Green="0" Blue="0" FaceName="Tahoma"/>
+        </UI>
+    </Package>
+</Wix>

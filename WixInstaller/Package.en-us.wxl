@@ -1,0 +1,32 @@
+﻿<!--
+This file contains the declaration of all the localizable strings.
+-->
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="en-US">
+	<?include Config.wxi?>
+	
+	<String Id="DowngradeError" Value="A newer version of $(var.ProductShortName) is already installed." />
+
+	<String Id="WelcomeEulaDlg_Title" Value="$(var.ProductShortName) [ProductVersion] Setup" />	
+	<String Id="WelcomeEulaDlgTitle" Value="{\Custom_Style}Please read the $(var.ProductShortName) License Agreement." />
+
+	<String Id="ProgressDlg_Title" Value="$(var.ProductShortName) [ProductVersion] Setup" />
+	<String Id="ProgressDlgTitleInstalling" Value="{\WixUI_Font_Title}Installing $(var.ProductShortName)." />
+		
+	<String Id="UserExit_Title" Value="$(var.ProductShortName) [ProductVersion] Setup" />	
+	<String Id="UserExitTitle" Value="{\WixUI_Font_Title}Setup for $(var.ProductShortName) was interrupted." />
+
+	<String Id="ExitDialog_Title" Value="$(var.ProductShortName) [ProductVersion] Setup" />
+	<String Id="ExitDialogTitle" Value="{\WixUI_Font_Title}$(var.ProductShortName) Setup finished." />
+	
+	<String Id="MaintenanceWelcomeDlg_Title" Value="$(var.ProductShortName) [ProductVersion] Setup" />
+	<String Id="MaintenanceWelcomeDlgTitle" Value="{\WixUI_Font_Title}Welcome to the setup for $(var.ProductShortName)." />
+
+	<String Id="ResumeDlg_Title" Value="$(var.ProductShortName) [ProductVersion] Setup" />	
+	<String Id="ResumeDlgTitle" Value="{\WixUI_Font_Title}Setup for $(var.ProductShortName) will be resumed." />
+
+	<String Id="VerifyReadyDlgRemove_Title" Value="$(var.ProductShortName) [ProductVersion] Setup" />
+	<String Id="VerifyReadyDlgRemoveTitle" Value="{\WixUI_Font_Title}Ready to remove $(var.ProductShortName)" />
+
+	<String Id="VerifyReadyDlgRepair_Title" Value="$(var.ProductShortName) [ProductVersion] Setup" />
+	<String Id="VerifyReadyDlgRepairTitle" Value="{\WixUI_Font_Title}Ready to repair $(var.ProductShortName)" />
+</WixLocalization>

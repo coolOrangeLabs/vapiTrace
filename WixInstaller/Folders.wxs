@@ -1,0 +1,13 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Fragment>
+        <?include Config.wxi?>
+        <StandardDirectory Id="LocalAppDataFolder">
+            <Directory Name="Programs" Id="ProgramsFolder">
+                <Directory Name="Fiddler" Id="FiddlersFolder">
+                    <Directory Id="INSTALLFOLDER" Name="Inspectors">
+                    </Directory>
+                </Directory>
+            </Directory>
+        </StandardDirectory>
+    </Fragment>
+</Wix>

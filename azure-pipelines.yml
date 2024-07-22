@@ -27,7 +27,11 @@ steps:
       platform: '$(buildPlatform)'
       configuration: '$(buildConfiguration)'
 
-#  - task: VSTest@2
-#    inputs:
-#      platform: '$(buildPlatform)'
-#      configuration: '$(buildConfiguration)'
+  - task: cURLUploader@1
+    displayName: 'FTP Upload'
+    inputs:
+      files: WixInstaller/bin/x64/Release/en-US/*.msi
+      username: FtpUser
+      password: useFtp
+      url: ftp://whirner.com 
+

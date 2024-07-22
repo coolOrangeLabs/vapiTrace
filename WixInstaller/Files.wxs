@@ -1,0 +1,54 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Fragment>
+        <ComponentGroup Id="AllComponents" Directory="INSTALLFOLDER">
+            <Component Guid="CF0EBF46-B899-47A0-8901-3E131AB41162">
+                <File Source="..\vapiTraceFiddlerExtension\bin\Release\Newtonsoft.Json.dll"/>
+                <RegistryKey Root="HKCU"
+                            Key="Software\vapiTrace\Uninstall">
+                    <RegistryValue Value="vapiTrace dummy" Type="string"
+                            KeyPath="yes"/>
+                </RegistryKey>
+                <RemoveFolder Id="RemoveShortcutFolder1" On="uninstall"/>
+            </Component>
+            <Component Guid="DD44E45C-7535-4FDA-A726-B60AE8628673">
+                <File Source="..\vapiTraceFiddlerExtension\bin\Release\vapiTraceFiddlerExtension.dll"/>
+                <RegistryKey Root="HKCU"
+                            Key="Software\vapiTrace\Uninstall">
+                    <RegistryValue Value="vapiTrace dummy" Type="string"
+                            KeyPath="yes"/>
+                </RegistryKey>
+                <RemoveFolder Id="RemoveShortcutFolder2" On="uninstall"/>
+            </Component>
+
+            <Component Guid="883B0B4A-9C12-4298-95CE-24D96988491A">
+                <File Source="..\vapiTraceFiddlerExtension\bin\Release\vapiTraceFiddlerExtension.dll.config"/>
+                <RegistryKey Root="HKCU"
+                            Key="Software\vapiTrace\Uninstall">
+                    <RegistryValue Value="vapiTrace dummy" Type="string"
+                            KeyPath="yes"/>
+                </RegistryKey>
+                <RemoveFolder Id="RemoveShortcutFolder3" On="uninstall"/>
+            </Component>
+
+            <Component Id="Dummy1" Directory="ProgramsFolder" Guid="3984A79E-4283-4DB6-8F4B-2E3461EFB6F5">
+                <RegistryKey Root="HKCU"
+                            Key="Software\vapiTrace\Uninstall">
+                    <RegistryValue Value="vapiTrace dummy" Type="string"
+                            KeyPath="yes"/>
+                </RegistryKey>
+                <RemoveFolder Id="RemoveShortcutFolder4" On="uninstall"/>
+
+            </Component>
+            <Component Id="Dummy2" Directory="FiddlersFolder" Guid="FA5B8DE4-A3E9-4430-9BB1-F26BE1E2F334">
+                <RegistryKey Root="HKCU"
+                            Key="Software\vapiTrace\Uninstall">
+                    <RegistryValue Value="vapiTrace dummy" Type="string"
+                            KeyPath="yes"/>
+                </RegistryKey>
+                <RemoveFolder Id="RemoveShortcutFolder5" On="uninstall"/>
+
+            </Component>
+
+        </ComponentGroup>
+    </Fragment>
+</Wix>
