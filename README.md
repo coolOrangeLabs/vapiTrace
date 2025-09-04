@@ -19,8 +19,3 @@ Learn the Vault API, by spying how the Vault client does his thing. Extend the F
 
 ## Installation
 In order to install the vapiTrace extension for Fiddler, just download the ZIP from the 'Releases' tab and extract it into the Fiddler Inspector folder under "%localappdata%\Programs\Fiddler\Inspectors".
-
-## Author
-COOLORANGE s.r.l.
-
-![coolOrange](https://i.ibb.co/NmnmjDT/Logo-CO-Full-colore-RGB-short-Payoff.png)
