@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
@@ -33,95 +32,46 @@ namespace vapiTraceFiddlerExtension
                     return;
                 }
 
-                var s = Encoding.UTF8.GetString(value);
-                if (s.IndexOf("<s:Envelope", StringComparison.Ordinal) <= 0)
+                if (!SoapEnvelopeParser.TryLoad(value, out var xml, out var error))
                 {
-                    _responseUserControl.Clear();
+                    _responseUserControl.Clear(error);
                     return;
                 }
 
-                s = s.Substring(s.IndexOf("<s:Envelope", StringComparison.Ordinal));
-                s = string.Concat(s.Substring(0, s.IndexOf("</s:Envelope>", StringComparison.Ordinal)),
-                    "</s:Envelope>");
-
-                var xml = new XmlDocument();
-                xml.LoadXml(s);
-
-                var xmlNamespaceManagers = new XmlNamespaceManager(xml.NameTable);
-                xmlNamespaceManagers.AddNamespace(xml.FirstChild.Prefix, xml.FirstChild.NamespaceURI);
-                xmlNamespaceManagers.AddNamespace("xop", "http://www.w3.org/2004/08/xop/include");
-
-                var bodyNode = xml.DocumentElement?.SelectSingleNode("//s:Body", xmlNamespaceManagers);
+                var bodyNode = SoapEnvelopeParser.GetBodyElement(xml);
                 if (bodyNode == null)
                 {
                     _responseUserControl.Clear();
                     return;
                 }
 
-                var responseNode = bodyNode.FirstChild;
-                var ns = responseNode.Attributes?["xmlns"];
-
-                string start;
-                if (ns != null && ns.InnerText.Contains("AutodeskDM/Services/"))
-                    start = "AutodeskDM/Services/";
-                else if (ns != null && ns.InnerText.Contains("AutodeskDM/Filestore/"))
-                    start = "AutodeskDM/Filestore/";
-                else
+                var responseNode = SoapEnvelopeParser.GetFirstChildElement(bodyNode);
+                if (responseNode == null)
                 {
                     _responseUserControl.Clear();
                     return;
                 }
 
-                string service;
-                var part = ns.InnerText.Substring(ns.InnerText.IndexOf(start, StringComparison.Ordinal) + start.Length);
-                if (part.IndexOf('/') < 0)
-                    service = part;
-                else
-                    service = part.Substring(0, part.IndexOf('/'));
+                VaultAssembly.TryGetServiceFromNamespace(responseNode.NamespaceURI, out var service);
                 var serviceType = VaultAssembly.GetServiceType(service);
 
-                var method = responseNode.Name.Remove(responseNode.Name.LastIndexOf("Response", StringComparison.Ordinal));
-                var methodInfo = serviceType.GetMethod(method);
-                if (methodInfo == null || methodInfo.ReturnParameter == null)
-                {
-                    _responseUserControl.Clear();
-                    return;
-                }
-
-                var returnType = methodInfo.ReturnParameter.ParameterType;
-
-                var resultNode = responseNode.FirstChild;
-                if (resultNode == null)
-                {
-                    _responseUserControl.SetData(returnType.FullName);
-                    return;
-                }
-
-                if (bodyNode.Attributes != null)
-                {
-                    foreach (XmlAttribute attribute in bodyNode.Attributes)
-                    {
-                        var newAttribute = xml.CreateAttribute(attribute.Name);
-                        newAttribute.Value = attribute.Value;
-                        resultNode.Attributes?.Append(newAttribute);
-                    }
-                }
-
-                var binaryNodes = xml.DocumentElement?.SelectNodes("//xop:Include", xmlNamespaceManagers);
-                if (binaryNodes != null)
-                {
-                    foreach (XmlNode binaryNode in binaryNodes)
-                    {
-                        var parent = binaryNode.ParentNode;
-                        parent?.RemoveAll();
-                    }
-                }
+                var method = SoapEnvelopeParser.StripResponseSuffix(responseNode.LocalName);
+                var methodInfo = serviceType?.GetMethod(method);
+                var returnType = methodInfo?.ReturnParameter?.ParameterType;
+                var resultNode = SoapEnvelopeParser.GetFirstChildElement(responseNode);
 
                 try
                 {
-                    using (TextReader reader = new StringReader(resultNode.OuterXml))
+                    if (returnType == null || resultNode == null)
                     {
-                        var serializer = new XmlSerializer(returnType, new XmlRootAttribute(resultNode.Name));
+                        ShowRawResponse(returnType?.FullName ?? responseNode.LocalName, resultNode ?? responseNode, returnType);
+                        return;
+                    }
+
+                    var deserializationNode = PrepareResultNode(xml, bodyNode, responseNode, resultNode);
+                    using (TextReader reader = new StringReader(deserializationNode.OuterXml))
+                    {
+                        var serializer = new XmlSerializer(returnType, new XmlRootAttribute(deserializationNode.Name));
                         if (returnType.IsArray)
                         {
                             var trees = new List<SerializedTreeNode>();
@@ -130,7 +80,8 @@ namespace vapiTraceFiddlerExtension
                             {
                                 foreach (var r in enumerable)
                                 {
-                                    var treeNode = SerializedTreeNode.CreateTree(r, r.GetType().Name);
+                                    var itemTypeName = r?.GetType().Name ?? returnType.GetElementType()?.Name ?? "Item";
+                                    var treeNode = SerializedTreeNode.CreateTree(r, itemTypeName);
                                     trees.Add(treeNode);
                                 }
                             }
@@ -147,7 +98,10 @@ namespace vapiTraceFiddlerExtension
                 catch (Exception ex)
                 {
                     Debug.Write(ex.Message);
-                    _responseUserControl.Clear(ex.Message);
+                    ShowRawResponse(
+                        returnType?.FullName != null ? $"{returnType.FullName} (raw XML fallback)" : $"{responseNode.LocalName} (raw XML fallback)",
+                        resultNode ?? responseNode,
+                        returnType);
                 }
             }
         }
@@ -193,5 +147,46 @@ namespace vapiTraceFiddlerExtension
 		{
 			return 0;
 		}
+
+        private void ShowRawResponse(string header, XmlNode node, Type type)
+        {
+            var tree = SerializedTreeNode.CreateTree(node, node?.LocalName ?? "Response");
+            _responseUserControl.SetData(header, tree, type);
+        }
+
+        private static XmlElement PrepareResultNode(XmlDocument xml, XmlElement bodyNode, XmlElement responseNode, XmlElement resultNode)
+        {
+            var clone = (XmlElement) resultNode.CloneNode(true);
+            CopyAttributes(xml, bodyNode, clone);
+            CopyAttributes(xml, responseNode, clone);
+
+            var binaryNodes = clone.SelectNodes(".//*[local-name()='Include' and namespace-uri()='http://www.w3.org/2004/08/xop/include']");
+            if (binaryNodes != null)
+            {
+                foreach (System.Xml.XmlNode binaryNode in binaryNodes)
+                {
+                    var parent = binaryNode.ParentNode;
+                    parent?.RemoveAll();
+                }
+            }
+
+            return clone;
+        }
+
+        private static void CopyAttributes(XmlDocument xml, XmlElement source, XmlElement target)
+        {
+            if (source?.Attributes == null || target?.Attributes == null)
+                return;
+
+            foreach (System.Xml.XmlAttribute attribute in source.Attributes)
+            {
+                if (target.Attributes[attribute.Name] != null)
+                    continue;
+
+                var newAttribute = xml.CreateAttribute(attribute.Prefix, attribute.LocalName, attribute.NamespaceURI);
+                newAttribute.Value = attribute.Value;
+                target.Attributes.Append(newAttribute);
+            }
+        }
 	}
 }

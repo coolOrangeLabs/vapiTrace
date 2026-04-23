@@ -57,11 +57,71 @@ namespace vapiTraceFiddlerExtension
 
         public static Type GetServiceType(string service)
         {
-            var typeName = $"Autodesk.Connectivity.WebServices.{service}Service";
-            if (typeName.EndsWith("ServiceService"))
-                typeName = typeName.Replace("ServiceService", "Service");
-            
-            return Instance.GetType(typeName);
+            var typeName = NormalizeServiceTypeName(service);
+            return string.IsNullOrEmpty(typeName) ? null : Instance?.GetType(typeName);
+        }
+
+        private static string NormalizeServiceTypeName(string service)
+        {
+            if (string.IsNullOrWhiteSpace(service))
+                return null;
+
+            var typeName = $"Autodesk.Connectivity.WebServices.{service.Trim()}";
+            if (!typeName.EndsWith("Service", StringComparison.Ordinal) &&
+                !typeName.EndsWith("Extensions", StringComparison.Ordinal))
+            {
+                typeName += "Service";
+            }
+
+            if (typeName.EndsWith("DocumentExtensions", StringComparison.Ordinal))
+                typeName = typeName.Replace("DocumentExtensions", "DocumentServiceExtensions");
+
+            return typeName;
+        }
+
+        public static bool TryGetServiceFromSoapAction(string soapAction, out string service, out string version)
+        {
+            service = null;
+            version = null;
+
+            if (string.IsNullOrWhiteSpace(soapAction))
+                return false;
+
+            var parts = soapAction.Trim('\\', '"')
+                .Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length < 5)
+                return false;
+
+            service = parts[parts.Length - 2];
+            if (parts.Length >= 9)
+                version = string.Join("/", parts.Skip(parts.Length - 5).Take(3));
+
+            return !string.IsNullOrEmpty(service);
+        }
+
+        public static bool TryGetServiceFromNamespace(string namespaceUri, out string service)
+        {
+            service = null;
+
+            if (string.IsNullOrWhiteSpace(namespaceUri))
+                return false;
+
+            var parts = namespaceUri.TrimEnd('/')
+                .Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+
+            for (var i = 0; i < parts.Length; i++)
+            {
+                if ((parts[i].Equals("Services", StringComparison.OrdinalIgnoreCase) ||
+                     parts[i].Equals("Filestore", StringComparison.OrdinalIgnoreCase)) &&
+                    i + 1 < parts.Length)
+                {
+                    service = parts[i + 1];
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static void FindVaultFiles()
